@@ -22,20 +22,20 @@ class TransactionsController extends Controller
             $user = Auth::user();
 
             // Get transactions
-            $transactions = $user->transactions;
+            $transactions = Transactions::where("user_id", $user->id)->get();
 
             // Return response
             return response()->json([
                 "message" => "Request Successful",
                 "transactions" => TransactionResource::collection($transactions)
-            ]);
+            ], 200);
         } catch (\Exception $err) {
             Log::error("An error occured fethcing transactions" . $err->getMessage());
 
             return response()->json([
                 "message" => "An error occured",
                 "error" => $err->getMessage()
-            ]);
+            ], 500);
         }
     }
 

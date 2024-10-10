@@ -161,4 +161,48 @@ class UsersController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Authenticate user
+     */
+    public function authenticateUser(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                "email" => "required|string|email",
+                "password" => "required|min:8"
+            ]);
+
+            // Return an error response if validation fails
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
+            }
+
+            $user = User::where("email", $request->email)->first();
+
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    "message" => "Invalid Credentials",
+                    "status" => 401
+                ], 401);
+            }
+
+            // Create token
+            $token = $user->createToken("token")->plainTextToken;
+
+            // Return response
+            return response()->json([
+                "message" => "User Authenticated",
+                "user" => new UserResource($user),
+                "token" => $token
+            ], 200);
+        } catch (\Exception $err) {
+            Log::error("Error authenticating user: " . $err->getMessage());
+
+            return response()->json([
+                "message" => "An error occured authenticating user",
+                "error" => $err->getMessage()
+            ], 500);
+        }
+    }
 }
